@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { View, TextInput, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../firebaseConfig';
+import { router } from 'expo-router';
 
 export default function LoginScreen() {
     const [email,setEmail]=useState("");
@@ -22,7 +23,7 @@ export default function LoginScreen() {
             placeholderTextColor="gray"
             />
             <TouchableOpacity style={styles.signInButton} onPress={()=>{
-                signInWithEmailAndPassword(auth,email,password)
+                signInWithEmailAndPassword(auth,email.trim().toLowerCase(),password)
                 .then((userCredential)=>{
                     const user=userCredential.user;
                     console.log("You've done it! You've logged in. I'm so proud");
@@ -31,6 +32,9 @@ export default function LoginScreen() {
                     console.log("You've failed, and this is why: ",error.message);
                 })
                 }}><Text style={styles.signInText}>Log in</Text></TouchableOpacity>
+            <TouchableOpacity style={styles.signInButton} onPress={() => router.push('/signUp')}>
+                <Text style={styles.signInText}>Go to Sign Up</Text>
+            </TouchableOpacity>    
     </View>
     )
 }
@@ -53,7 +57,8 @@ const styles= StyleSheet.create({
         alignItems:'center',
         backgroundColor:'#50546B',
         width: '50%',
-        height: 30
+        height: 30,
+        marginTop: 12
     },
     signInText:{
         color:'white'

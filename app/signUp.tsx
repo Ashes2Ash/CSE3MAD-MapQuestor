@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { View, TextInput, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
 import { auth } from '../firebaseConfig';
+import { router } from 'expo-router';
 
-export default function LoginScreen() {
+export default function SignUpScreen() {
     const [email,setEmail]=useState("");
     const [password,setPassword]=useState("");
     return(
-        <View style={styles.loginContainer}>
+        <View style={styles.signUpContainer}>
             <TextInput style={styles.userInputs}
             value={email}
             onChangeText={setEmail}
@@ -21,21 +22,29 @@ export default function LoginScreen() {
             placeholder='Enter your password'
             placeholderTextColor="gray"
             />
-            <TouchableOpacity style={styles.signInButton} onPress={()=>{
-                signInWithEmailAndPassword(auth,email,password)
+            <TouchableOpacity style={styles.signUpButton} onPress={()=>{
+                createUserWithEmailAndPassword(auth, email.trim().toLowerCase(), password)
                 .then((userCredential)=>{
                     const user=userCredential.user;
-                    console.log("You've done it! You've logged in. I'm so proud");
+                    console.log("You've done it! You've signed up. I'm so proud");
+                    sendEmailVerification(user)
+                        .then(() => {
+                            console.log("Verification email sent");
+                            router.push('/'); 
+                        })
+                        .catch((error) => {
+                            console.log("Failed to send verification:", error.message);
+                        });
                 })
                 .catch((error)=>{
                     console.log("You've failed, and this is why: ",error.message);
                 })
-                }}><Text style={styles.signInText}>Log in</Text></TouchableOpacity>
+                }}><Text style={styles.signInText}>Sign Up</Text></TouchableOpacity>
     </View>
     )
 }
 const styles= StyleSheet.create({
-    loginContainer:{
+    signUpContainer:{
         flex:1,
         justifyContent:'center',
         alignItems:'center',
@@ -48,7 +57,7 @@ const styles= StyleSheet.create({
         marginBottom:12,
         borderRadius:6
     },
-    signInButton:{
+    signUpButton:{
         justifyContent:'center',
         alignItems:'center',
         backgroundColor:'#50546B',
