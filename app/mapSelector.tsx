@@ -1,5 +1,6 @@
-import { View, Text, StyleSheet } from 'react-native';
-
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+// Expo Router navigation object for screen transitions
+import { router } from 'expo-router';
 export default function mapSelector() {
   return (
     <View style={styles.screen}>
@@ -9,6 +10,11 @@ export default function mapSelector() {
 
   <View style={styles.container}>
     <Text>place map tiles here</Text>
+  </View>
+  <View>
+    <TouchableOpacity style={styles.testButton} onPress={() => router.push('/uploadMap')}>
+            <Text>Upload New Map</Text>
+          </TouchableOpacity>
   </View>
 </View>
   );
