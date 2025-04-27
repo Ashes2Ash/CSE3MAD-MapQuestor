@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity,TextInput } from 'react-native';
 // Expo Router navigation object for screen transitions
 import { router } from 'expo-router';
 // Expo image picker to allow for uplaoding map images
@@ -24,9 +24,16 @@ export default function ScreenName() {
             setMap(result.assets[0].uri)
         }
     };
+    const [mapName,setMapName]=useState('');
   return (
     <View style={styles.screen}>
         <Text>Upload Map</Text>
+        <View>
+          <TextInput  style={styles.input}
+                      placeholder="Enter map title"
+                      value={mapName}
+                      onChangeText={setMapName}></TextInput>
+        </View>
         <View style={styles.container}>
             {map && (
                 <Image
@@ -35,8 +42,10 @@ export default function ScreenName() {
                 />
             )}
             <View>
+                
                 <TouchableOpacity onPress={() => mapSelect()} style={styles.testButton}>
                 <Text>Upload Image to use as Map!</Text></TouchableOpacity>
+
             </View>
         </View>
         
@@ -60,8 +69,18 @@ const styles = StyleSheet.create({
     justifyContent:'center',
     alignItems:'center',
     backgroundColor:'#50546B',
-    width: '50%',
+    width: '90%',
     height: 30,
     marginTop: 12
+  },
+  input: {
+    width: '80%',
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    marginBottom: 12,
+    backgroundColor: 'white',
   }
+  
 });
