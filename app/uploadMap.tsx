@@ -4,7 +4,9 @@ import { router } from 'expo-router';
 // Expo image picker to allow for uplaoding map images
 import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
-
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage'
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { auth, db } from '../firebaseConfig';
 
 
 export default function ScreenName() {
@@ -25,6 +27,39 @@ export default function ScreenName() {
         }
     };
     const [mapName,setMapName]=useState('');
+    const mapUpload = async (localUri:string,title:string) =>{
+      const storage= getStorage();
+      const user = auth.currentUser;
+
+      if(!user){
+        console.log('No user logged in')
+        return;
+      }
+      if (!localUri) {
+        console.error('No map selected to upload.');
+        return;
+      }
+      if (!title) {
+        console.error('No map title provided.');
+        return;
+      }
+      const response = await fetch(localUri)
+      const blob = await response.blob();
+      //console.log(blob)
+      const fileName = `${user.uid}_${new Date().toISOString()}.jpg`
+      const storageRef = ref(storage,`maps/${user.uid}/${fileName}`);
+      //console.log(storageRef)
+      await uploadBytes(storageRef, blob)
+      const downloadURL = await getDownloadURL(storageRef);
+      console.log(downloadURL)
+      await addDoc(collection(db, 'users', user.uid, 'maps'), {
+        title: title,
+        imageURL: downloadURL,
+        createdAt: serverTimestamp(),
+      });
+    
+      console.log('✅ Map uploaded and saved successfully!');
+    }
   return (
     <View style={styles.screen}>
         <Text>Upload Map</Text>
@@ -45,7 +80,18 @@ export default function ScreenName() {
                 
                 <TouchableOpacity onPress={() => mapSelect()} style={styles.testButton}>
                 <Text>Upload Image to use as Map!</Text></TouchableOpacity>
-
+                <TouchableOpacity onPress={() => {
+                  if (!map) {
+                    console.log('❌ Please select an image first.');
+                    return;
+                  }
+                  if (!mapName.trim()) {
+                    console.log('❌ Please enter a map title.');
+                    return;
+                  }
+                  mapUpload(map,mapName)}}
+                  style={styles.testButton}>
+                <Text>Create Map!</Text></TouchableOpacity>
             </View>
         </View>
         
