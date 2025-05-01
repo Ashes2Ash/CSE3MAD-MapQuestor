@@ -35,14 +35,6 @@ export default function ScreenName() {
         console.log('No user logged in')
         return;
       }
-      if (!localUri) {
-        console.error('No map selected to upload.');
-        return;
-      }
-      if (!title) {
-        console.error('No map title provided.');
-        return;
-      }
       const response = await fetch(localUri)
       const blob = await response.blob();
       //console.log(blob)
@@ -58,7 +50,7 @@ export default function ScreenName() {
         createdAt: serverTimestamp(),
       });
     
-      console.log('✅ Map uploaded and saved successfully!');
+      console.log('Map uploaded and saved successfully!');
     }
   return (
     <View style={styles.screen}>
@@ -82,11 +74,11 @@ export default function ScreenName() {
                 <Text>Upload Image to use as Map!</Text></TouchableOpacity>
                 <TouchableOpacity onPress={() => {
                   if (!map) {
-                    console.log('❌ Please select an image first.');
+                    console.log('Please select an image first.');
                     return;
                   }
                   if (!mapName.trim()) {
-                    console.log('❌ Please enter a map title.');
+                    console.log('Please enter a map title.');
                     return;
                   }
                   mapUpload(map,mapName)}}
