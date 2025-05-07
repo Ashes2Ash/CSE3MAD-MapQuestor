@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Platform, View, Text, StyleSheet, Modal, TextInput, Button, Alert } from 'react-native';
-import MapView, { Marker } from 'react-native-maps';
 import { GoogleMap, Marker as GoogleMarker, LoadScript } from '@react-google-maps/api';
 import { db, savePOIWithImage } from '../firebaseConfig';
 import { doc, getDoc } from 'firebase/firestore';
