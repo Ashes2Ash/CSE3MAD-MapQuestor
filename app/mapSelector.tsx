@@ -1,22 +1,26 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { db } from '../firebaseConfig';
+import { db } from '../firebaseConfig'; // Import Firestore
 import { collection, getDocs } from 'firebase/firestore';
 
 const MapSelector = () => {
   const navigation = useNavigation();
   const [maps, setMaps] = useState([]);
 
+  // Fetch maps from Firestore on component mount
   useEffect(() => {
     const fetchMaps = async () => {
       try {
         const mapsCollection = collection(db, 'maps');
         const mapsSnapshot = await getDocs(mapsCollection);
-        const mapsList = mapsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const mapsList = mapsSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
         setMaps(mapsList);
       } catch (error) {
-        console.error('Error fetching maps:', error);
+        console.error('Error fetching maps: ', error);
       }
     };
 
@@ -26,9 +30,9 @@ const MapSelector = () => {
   const renderMapItem = ({ item }) => (
     <TouchableOpacity
       style={styles.mapItem}
-      onPress={() => navigation.navigate('MapEditor', { mapId: item.id, mapImage: item.imageUrl })}
+      onPress={() => navigation.navigate('MapEditor', { mapId: item.id })}
     >
-      <Text style={styles.mapTitle}>{item.name}</Text>
+      <Text style={styles.mapTitle}>{item.name || 'Unnamed Map'}</Text>
     </TouchableOpacity>
   );
 
@@ -42,10 +46,10 @@ const MapSelector = () => {
         ListEmptyComponent={<Text>No maps found.</Text>}
       />
       <TouchableOpacity
-        style={styles.createButton}
+        style={styles.button}
         onPress={() => navigation.navigate('MapConfig')}
       >
-        <Text style={styles.createButtonText}>Create New Map</Text>
+        <Text style={styles.buttonText}>Create New Map</Text>
       </TouchableOpacity>
     </View>
   );
@@ -70,14 +74,14 @@ const styles = StyleSheet.create({
   mapTitle: {
     fontSize: 18,
   },
-  createButton: {
+  button: {
     backgroundColor: '#007AFF',
     padding: 15,
     borderRadius: 5,
     alignItems: 'center',
     marginTop: 20,
   },
-  createButtonText: {
+  buttonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
