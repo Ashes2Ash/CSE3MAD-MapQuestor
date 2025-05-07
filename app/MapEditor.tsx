@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Modal, TextInput, Button, Alert } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
+import { useLocalSearchParams } from 'expo-router'; // Use Expo Router to get params
 import { db, savePOIWithImage } from '../firebaseConfig';
 import { doc, getDoc } from 'firebase/firestore';
 
-const MapEditor = ({ route }) => {
-  const { mapId } = route.params;
+const MapEditor = () => {
+  const { mapId } = useLocalSearchParams(); // Get mapId from route params
   const [mapData, setMapData] = useState(null);
   const [pois, setPois] = useState([]);
   const [selectedPoi, setSelectedPoi] = useState(null);
@@ -38,7 +39,6 @@ const MapEditor = ({ route }) => {
     setModalVisible(true);
   };
 
-  // Save all POIs to Firestore
   const handleSavePois = async () => {
     try {
       for (const poi of pois) {
@@ -49,7 +49,7 @@ const MapEditor = ({ route }) => {
           name: poi.name || 'Unnamed POI',
           description: poi.description || '',
         };
-        await savePOIWithImage(poiData, null); // No image for now
+        await savePOIWithImage(poiData, null);
       }
       Alert.alert('Success', 'POIs saved successfully!');
     } catch (error) {
