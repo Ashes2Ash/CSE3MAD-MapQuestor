@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Platform, View, Text, StyleSheet, Modal, TextInput, Button, Alert } from 'react-native';
+import { Platform, View, Text, StyleSheet, Modal, TextInput, Button, Alert, Image } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { GoogleMap, Marker as GoogleMarker, LoadScript } from '@react-google-maps/api';
-import { db, savePOIWithImage } from '../firebaseConfig';
+import { db, auth, savePOIWithImage } from '../firebaseConfig';
 import { doc, getDoc } from 'firebase/firestore';
 
 const MapEditor = ({ route }) => {
@@ -19,13 +20,19 @@ const MapEditor = ({ route }) => {
   useEffect(() => {
     const fetchMapData = async () => {
       try {
+        console.log('Fetching map data for mapId:', mapId);
         const mapRef = doc(db, 'maps', mapId);
         const mapSnap = await getDoc(mapRef);
         if (mapSnap.exists()) {
           setMapData(mapSnap.data());
+          console.log('Map data fetched:', mapSnap.data());
+        } else {
+          console.log('Map not found for mapId:', mapId);
+          Alert.alert('Error', 'Map not found.');
         }
       } catch (error) {
-        console.error('Error fetching map data: ', error);
+        console.error('Error fetching map data:', error);
+        Alert.alert('Error', 'Failed to fetch map data.');
       }
     };
 
@@ -33,27 +40,81 @@ const MapEditor = ({ route }) => {
   }, [mapId]);
 
   const handleMapPress = (e) => {
-    const coordinate = Platform.OS === 'web' ? 
-      { latitude: e.latLng.lat(), longitude: e.latLng.lng() } : 
-      e.nativeEvent.coordinate;
+    const coordinate = Platform.OS === 'web' 
+      ? { latitude: e.latLng.lat(), longitude: e.latLng.lng() } 
+      : e.nativeEvent.coordinate;
     const newPoi = {
       coordinate,
       name: '',
       description: '',
+      imageUri: null,
     };
     setPois([...pois, newPoi]);
     setSelectedPoi(newPoi);
     setModalVisible(true);
+    console.log('New POI added:', newPoi);
   };
 
   const handleMarkerPress = (poi) => {
     setSelectedPoi(poi);
     setModalVisible(true);
+    console.log('Marker pressed:', poi);
+  };
+
+  const pickImage = async () => {
+    try {
+      console.log('Requesting media library permissions...');
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        console.log('Media library permissions denied.');
+        Alert.alert('Permission Denied', 'Camera roll access is required to select an image.');
+        return;
+      }
+
+      console.log('Launching image library...');
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 1,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const selectedImage = result.assets[0];
+        console.log('Image selected:', selectedImage.uri);
+        setSelectedPoi(prev => ({ ...prev, imageUri: selectedImage.uri }));
+        const updatedPois = pois.map(p => 
+          p.coordinate === selectedPoi.coordinate ? { ...p, imageUri: selectedImage.uri } : p
+        );
+        setPois(updatedPois);
+      } else {
+        console.log('Image selection canceled or no image selected.');
+        Alert.alert('No Image Selected', 'Please select an image.');
+      }
+    } catch (error) {
+      console.error('Error selecting image:', error);
+      Alert.alert('Error', 'Failed to select image.');
+    }
   };
 
   const handleSavePois = async () => {
     try {
+      console.log('Saving POIs:', pois);
+      if (!auth.currentUser) {
+        console.log('No user logged in.');
+        Alert.alert('Error', 'You must be logged in to save POIs.');
+        return;
+      }
+      console.log('User authenticated:', auth.currentUser.uid);
+
       for (const poi of pois) {
+        let imageBlob = null;
+        if (Platform.OS !== 'web' && poi.imageUri) {
+          console.log('Fetching image from URI:', poi.imageUri);
+          const response = await fetch(poi.imageUri);
+          console.log('Converting image to Blob...');
+          imageBlob = await response.blob();
+        }
         const poiData = {
           mapId: mapId,
           latitude: poi.coordinate.latitude,
@@ -61,12 +122,14 @@ const MapEditor = ({ route }) => {
           name: poi.name || 'Unnamed POI',
           description: poi.description || '',
         };
-        await savePOIWithImage(poiData, null); // No image for now
+        console.log('Saving POI:', poiData);
+        await savePOIWithImage(poiData, imageBlob);
+        console.log('POI saved successfully.');
       }
       Alert.alert('Success', 'POIs saved successfully!');
     } catch (error) {
-      console.error('Error saving POIs: ', error);
-      Alert.alert('Error', 'Failed to save POIs.');
+      console.error('Error saving POIs:', error);
+      Alert.alert('Error', `Failed to save POIs: ${error.message}`);
     }
   };
 
@@ -161,6 +224,10 @@ const MapEditor = ({ route }) => {
               }}
               multiline
             />
+            {Platform.OS !== 'web' && <Button title="Upload Image" onPress={pickImage} />}
+            {Platform.OS !== 'web' && selectedPoi?.imageUri && (
+              <Image source={{ uri: selectedPoi.imageUri }} style={{ width: 100, height: 100, marginBottom: 10 }} />
+            )}
             <Button
               title="Save"
               onPress={() => setModalVisible(false)}
