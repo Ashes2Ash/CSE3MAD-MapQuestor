@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { db } from '../firebaseConfig'; // Import Firestore
+import { router } from 'expo-router'; // Use Expo Router for navigation
+import { db } from '../firebaseConfig';
 import { collection, getDocs } from 'firebase/firestore';
 
 const MapSelector = () => {
-  const navigation = useNavigation();
   const [maps, setMaps] = useState([]);
 
-  // Fetch maps from Firestore on component mount
   useEffect(() => {
     const fetchMaps = async () => {
       try {
@@ -30,7 +28,7 @@ const MapSelector = () => {
   const renderMapItem = ({ item }) => (
     <TouchableOpacity
       style={styles.mapItem}
-      onPress={() => navigation.navigate('MapEditor', { mapId: item.id })}
+      onPress={() => router.push({ pathname: '/mapEditor', params: { mapId: item.id } })}
     >
       <Text style={styles.mapTitle}>{item.name || 'Unnamed Map'}</Text>
     </TouchableOpacity>
@@ -47,7 +45,7 @@ const MapSelector = () => {
       />
       <TouchableOpacity
         style={styles.button}
-        onPress={() => navigation.navigate('MapConfig')}
+        onPress={() => router.push('/mapConfig')}
       >
         <Text style={styles.buttonText}>Create New Map</Text>
       </TouchableOpacity>
