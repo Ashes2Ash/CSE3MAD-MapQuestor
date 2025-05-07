@@ -1,5 +1,5 @@
 import React, {FC} from 'react'; //Imports react and Function Component
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native'; //Imports building blocks for screen
+import { View, Text, StyleSheet, TouchableOpacity, Image, Dimensions } from 'react-native'; //Imports building blocks for screen
 import {useState,useEffect} from 'react'; //useState stores states of data. used in this to hold map lists from firebase. useEffect runs side loaded scripts at specific times 
 import {auth,db} from '../firebaseConfig'; //auth allows us to confirm which user is logged in, db links to our firestore
 import { router } from 'expo-router'; //redirects to other page in app
@@ -11,6 +11,11 @@ interface MapTileProps {
   title:   string;
   onPress: () => void;
   key?: React.Key;
+}
+type MapGridProps={
+  children: React.ReactElement[] | React.ReactElement
+  minColumnWidth?:number
+  gap?:number
 }
 //Reusable component (FC: Functional Component), made up of the above properties that is looped through below to list out each map attached to the user in a grid.
 const MapTile: FC<MapTileProps> =({uri, onPress,title})=>{
@@ -24,7 +29,22 @@ const MapTile: FC<MapTileProps> =({uri, onPress,title})=>{
     </TouchableOpacity>
   )
 }
+function MapGrid({children,
+  minColumnWidth = 120,
+  gap = 8}: MapGridProps): JSX.Element{
+  const userMaps=Array.isArray(children) ? children:[children]
+  const [gridWidth, setgridWidth] = useState(0);
+  return(
+    <View style={styles.grid}>
+      {userMaps.map((child, i)=>(
+        <View style={styles.tile} key={i}>
+          {child}
+        </View>
+      ))}
+    </View>
+);
 
+}
 export default function mapSelector() {
   //defines the maps array that holds the users map list. the setMaps function that is called to update the array
   const [maps, setMaps]= useState([]as {
@@ -77,7 +97,7 @@ export default function mapSelector() {
     <Text>Select a map to edit!</Text>
   </View>
 
-  <View style={styles.container}>
+  <MapGrid>
 
   {maps.map(item => (
     <MapTile
@@ -89,7 +109,7 @@ export default function mapSelector() {
     />
   ))}
 
-  </View>
+  </MapGrid>
   <View>
     <TouchableOpacity style={styles.testButton} onPress={() => router.push('/uploadMap')}>
             <Text>Upload New Map</Text>
@@ -125,5 +145,15 @@ const styles = StyleSheet.create({
     width: '50%',
     height: 30,
     marginTop: 12
+  },
+  grid:{
+    flexDirection: 'row',
+    flexWrap:'wrap',
+    justifyContent:'flex-start',
+    padding: 2
+  },
+  tile:{
+    width:'48%',
+    margin: '1%'
   }
 });
