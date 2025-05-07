@@ -1,94 +1,144 @@
 import React, { useState, useEffect } from 'react';
-import { View, Image, StyleSheet, Modal, TextInput, Button, Text } from 'react-native';
-import { GestureHandlerRootView, TapGestureHandler } from 'react-native-gesture-handler';
-import { db } from '../firebaseConfig';
-import { collection, addDoc, getDocs } from 'firebase/firestore';
+import { View, Text, StyleSheet, Modal, TextInput, Button, Alert } from 'react-native';
+import MapView, { Marker } from 'react-native-maps';
+import { db, savePOIWithImage } from '../firebaseConfig';
+import { doc, getDoc } from 'firebase/firestore';
 
 const MapEditor = ({ route }) => {
-  const { mapId, mapImage } = route.params;
+  const { mapId } = route.params;
+  const [mapData, setMapData] = useState(null);
   const [pois, setPois] = useState([]);
+  const [selectedPoi, setSelectedPoi] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
-  const [currentPoi, setCurrentPoi] = useState(null);
-  const [poiName, setPoiName] = useState('');
-  const [poiDescription, setPoiDescription] = useState('');
 
   useEffect(() => {
-    const fetchPois = async () => {
+    const fetchMapData = async () => {
       try {
-        const poisCollection = collection(db, `maps/${mapId}/pois`);
-        const poisSnapshot = await getDocs(poisCollection);
-        const poisList = poisSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setPois(poisList);
+        const mapRef = doc(db, 'maps', mapId);
+        const mapSnap = await getDoc(mapRef);
+        if (mapSnap.exists()) {
+          setMapData(mapSnap.data());
+        }
       } catch (error) {
-        console.error('Error fetching POIs:', error);
+        console.error('Error fetching map data: ', error);
       }
     };
 
-    fetchPois();
+    fetchMapData();
   }, [mapId]);
 
-  const handleTap = (event) => {
-    const { locationX, locationY } = event.nativeEvent;
-    const newPoi = { x: locationX, y: locationY, name: '', description: '' };
-    setCurrentPoi(newPoi);
+  const handleMapPress = (e) => {
+    const newPoi = {
+      coordinate: e.nativeEvent.coordinate,
+      name: '',
+      description: '',
+    };
+    setPois([...pois, newPoi]);
+    setSelectedPoi(newPoi);
     setModalVisible(true);
   };
 
-  const savePoi = async () => {
-    if (currentPoi) {
-      const updatedPoi = { ...currentPoi, name: poiName, description: poiDescription };
-      try {
-        const poisCollection = collection(db, `maps/${mapId}/pois`);
-        await addDoc(poisCollection, updatedPoi);
-        setPois([...pois, updatedPoi]);
-        setModalVisible(false);
-        setPoiName('');
-        setPoiDescription('');
-        setCurrentPoi(null);
-      } catch (error) {
-        console.error('Error saving POI:', error);
+  // Save all POIs to Firestore
+  const handleSavePois = async () => {
+    try {
+      for (const poi of pois) {
+        const poiData = {
+          mapId: mapId,
+          latitude: poi.coordinate.latitude,
+          longitude: poi.coordinate.longitude,
+          name: poi.name || 'Unnamed POI',
+          description: poi.description || '',
+        };
+        await savePOIWithImage(poiData, null); // No image for now
       }
+      Alert.alert('Success', 'POIs saved successfully!');
+    } catch (error) {
+      console.error('Error saving POIs: ', error);
+      Alert.alert('Error', 'Failed to save POIs.');
     }
   };
 
-  return (
-    <GestureHandlerRootView style={styles.container}>
-      <Text style={styles.header}>Map Editor</Text>
-      <TapGestureHandler onHandlerStateChange={handleTap}>
-        <View style={styles.mapContainer}>
-          <Image source={{ uri: mapImage }} style={styles.mapImage} />
-          {pois.map((poi, index) => (
-            <View
-              key={index}
-              style={[styles.poiMarker, { left: poi.x - 5, top: poi.y - 5 }]}
-            />
-          ))}
-        </View>
-      </TapGestureHandler>
+  if (!mapData) {
+    return <Text>Loading map...</Text>;
+  }
 
-      <Modal visible={modalVisible} animationType="slide">
+  return (
+    <View style={styles.container}>
+      <Text style={styles.header}>Map Editor</Text>
+      <MapView
+        style={styles.map}
+        initialRegion={{
+          latitude: mapData.latitude || 37.78825,
+          longitude: mapData.longitude || -122.4324,
+          latitudeDelta: 0.0922,
+          longitudeDelta: 0.0421,
+        }}
+        onPress={handleMapPress}
+      >
+        {pois.map((poi, index) => (
+          <Marker
+            key={index}
+            coordinate={poi.coordinate}
+            title={poi.name || 'Unnamed POI'}
+            description={poi.description}
+            onPress={() => {
+              setSelectedPoi(poi);
+              setModalVisible(true);
+            }}
+          />
+        ))}
+      </MapView>
+      <Button title="Save POIs" onPress={handleSavePois} />
+
+      <Modal
+        visible={modalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setModalVisible(false)}
+      >
         <View style={styles.modalContainer}>
-          <Text style={styles.modalHeader}>Point of Interest</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Name"
-            value={poiName}
-            onChangeText={setPoiName}
-          />
-          <TextInput
-            style={[styles.input, styles.descriptionInput]}
-            placeholder="Description"
-            value={poiDescription}
-            onChangeText={setPoiDescription}
-            multiline
-          />
-          <View style={styles.buttonContainer}>
-            <Button title="Save" onPress={savePoi} color="#007AFF" />
-            <Button title="Cancel" onPress={() => setModalVisible(false)} color="#FF3B30" />
+          <View style={styles.modalContent}>
+            <Text style={styles.modalHeader}>POI Details</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="POI Name"
+              value={selectedPoi?.name}
+              onChangeText={(text) => {
+                const updatedPoi = { ...selectedPoi, name: text };
+                setSelectedPoi(updatedPoi);
+                const updatedPois = pois.map((p) =>
+                  p.coordinate === selectedPoi.coordinate ? updatedPoi : p
+                );
+                setPois(updatedPois);
+              }}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Description"
+              value={selectedPoi?.description}
+              onChangeText={(text) => {
+                const updatedPoi = { ...selectedPoi, description: text };
+                setSelectedPoi(updatedPoi);
+                const updatedPois = pois.map((p) =>
+                  p.coordinate === selectedPoi.coordinate ? updatedPoi : p
+                );
+                setPois(updatedPois);
+              }}
+              multiline
+            />
+            <Button
+              title="Save"
+              onPress={() => setModalVisible(false)}
+            />
+            <Button
+              title="Cancel"
+              onPress={() => setModalVisible(false)}
+              color="red"
+            />
           </View>
         </View>
       </Modal>
-    </GestureHandlerRootView>
+    </View>
   );
 };
 
@@ -103,48 +153,32 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 20,
   },
-  mapContainer: {
+  map: {
     flex: 1,
-    position: 'relative',
-  },
-  mapImage: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'contain',
-  },
-  poiMarker: {
-    position: 'absolute',
-    width: 10,
-    height: 10,
-    backgroundColor: 'red',
-    borderRadius: 5,
   },
   modalContainer: {
     flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalContent: {
+    width: '80%',
+    backgroundColor: '#fff',
     padding: 20,
-    backgroundColor: '#f5f5f5',
+    borderRadius: 10,
   },
   modalHeader: {
     fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 20,
+    marginBottom: 15,
   },
   input: {
-    backgroundColor: '#fff',
     borderWidth: 1,
     borderColor: '#ccc',
     padding: 10,
     marginBottom: 10,
     borderRadius: 5,
-  },
-  descriptionInput: {
-    height: 100,
-    textAlignVertical: 'top',
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 20,
   },
 });
 
