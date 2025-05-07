@@ -1,16 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Modal, TextInput, Button, Alert } from 'react-native';
+import { Platform, View, Text, StyleSheet, Modal, TextInput, Button, Alert } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
-import { useLocalSearchParams } from 'expo-router'; // Use Expo Router to get params
+import { GoogleMap, Marker as GoogleMarker, LoadScript } from '@react-google-maps/api';
 import { db, savePOIWithImage } from '../firebaseConfig';
 import { doc, getDoc } from 'firebase/firestore';
 
-const MapEditor = () => {
-  const { mapId } = useLocalSearchParams(); // Get mapId from route params
+const MapEditor = ({ route }) => {
+  const { mapId } = route.params;
   const [mapData, setMapData] = useState(null);
   const [pois, setPois] = useState([]);
   const [selectedPoi, setSelectedPoi] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
+
+  const containerStyle = {
+    width: '100%',
+    height: '100%',
+  };
 
   useEffect(() => {
     const fetchMapData = async () => {
@@ -29,13 +34,21 @@ const MapEditor = () => {
   }, [mapId]);
 
   const handleMapPress = (e) => {
+    const coordinate = Platform.OS === 'web' ? 
+      { latitude: e.latLng.lat(), longitude: e.latLng.lng() } : 
+      e.nativeEvent.coordinate;
     const newPoi = {
-      coordinate: e.nativeEvent.coordinate,
+      coordinate,
       name: '',
       description: '',
     };
     setPois([...pois, newPoi]);
     setSelectedPoi(newPoi);
+    setModalVisible(true);
+  };
+
+  const handleMarkerPress = (poi) => {
+    setSelectedPoi(poi);
     setModalVisible(true);
   };
 
@@ -49,7 +62,7 @@ const MapEditor = () => {
           name: poi.name || 'Unnamed POI',
           description: poi.description || '',
         };
-        await savePOIWithImage(poiData, null);
+        await savePOIWithImage(poiData, null); // No image for now
       }
       Alert.alert('Success', 'POIs saved successfully!');
     } catch (error) {
@@ -65,29 +78,52 @@ const MapEditor = () => {
   return (
     <View style={styles.container}>
       <Text style={styles.header}>Map Editor</Text>
-      <MapView
-        style={styles.map}
-        initialRegion={{
-          latitude: mapData.latitude || 37.78825,
-          longitude: mapData.longitude || -122.4324,
-          latitudeDelta: 0.0922,
-          longitudeDelta: 0.0421,
-        }}
-        onPress={handleMapPress}
-      >
-        {pois.map((poi, index) => (
-          <Marker
-            key={index}
-            coordinate={poi.coordinate}
-            title={poi.name || 'Unnamed POI'}
-            description={poi.description}
-            onPress={() => {
-              setSelectedPoi(poi);
-              setModalVisible(true);
+      {Platform.OS === 'web' ? (
+        <LoadScript googleMapsApiKey="YOUR_GOOGLE_MAPS_API_KEY">
+          <GoogleMap
+            mapContainerStyle={containerStyle}
+            center={{
+              lat: mapData.latitude || 37.78825,
+              lng: mapData.longitude || -122.4324,
             }}
-          />
-        ))}
-      </MapView>
+            zoom={10}
+            onClick={handleMapPress}
+          >
+            {pois.map((poi, index) => (
+              <GoogleMarker
+                key={index}
+                position={{
+                  lat: poi.coordinate.latitude,
+                  lng: poi.coordinate.longitude,
+                }}
+                title={poi.name || 'Unnamed POI'}
+                onClick={() => handleMarkerPress(poi)}
+              />
+            ))}
+          </GoogleMap>
+        </LoadScript>
+      ) : (
+        <MapView
+          style={styles.map}
+          initialRegion={{
+            latitude: mapData.latitude || 37.78825,
+            longitude: mapData.longitude || -122.4324,
+            latitudeDelta: 0.0922,
+            longitudeDelta: 0.0421,
+          }}
+          onPress={handleMapPress}
+        >
+          {pois.map((poi, index) => (
+            <Marker
+              key={index}
+              coordinate={poi.coordinate}
+              title={poi.name || 'Unnamed POI'}
+              description={poi.description}
+              onPress={() => handleMarkerPress(poi)}
+            />
+          ))}
+        </MapView>
+      )}
       <Button title="Save POIs" onPress={handleSavePois} />
 
       <Modal
