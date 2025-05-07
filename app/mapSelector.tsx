@@ -14,8 +14,6 @@ interface MapTileProps {
 }
 type MapGridProps={
   children: React.ReactElement[] | React.ReactElement
-  minColumnWidth?:number
-  gap?:number
 }
 //Reusable component (FC: Functional Component), made up of the above properties that is looped through below to list out each map attached to the user in a grid.
 const MapTile: FC<MapTileProps> =({uri, onPress,title})=>{
@@ -29,11 +27,14 @@ const MapTile: FC<MapTileProps> =({uri, onPress,title})=>{
     </TouchableOpacity>
   )
 }
-function MapGrid({children,
-  minColumnWidth = 120,
-  gap = 8}: MapGridProps): JSX.Element{
+function MapGrid({children}: MapGridProps): JSX.Element{
   const userMaps=Array.isArray(children) ? children:[children]
-  const [gridWidth, setgridWidth] = useState(0);
+  //const screenWidth=Dimensions.get('window').width
+  //const tileWidth=120
+  //const columns= Math.max(
+  //  1,
+  // Math.floor(screenWidth/tileWidth)
+  //
   return(
     <View style={styles.grid}>
       {userMaps.map((child, i)=>(
