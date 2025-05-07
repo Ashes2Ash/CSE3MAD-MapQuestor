@@ -22,7 +22,11 @@
       "bundleIdentifier": "com.yourcompany.mapquestor",
       "infoPlist": {
         "NFCReaderUsageDescription": "We need to use NFC to share maps.",
-        "com.apple.developer.nfc.readersession.formats": ["NDEF"]
+        "com.apple.developer.nfc.readersession.formats": ["NDEF"],
+        "NSLocationWhenInUseUsageDescription": "We need your location to display the map."
+      },
+      "config": {
+        "googleMapsApiKey": "YOUR_GOOGLE_MAPS_API_KEY"
       }
     },
     "android": {
@@ -31,7 +35,12 @@
         "backgroundColor": "#FFFFFF"
       },
       "package": "com.yourcompany.mapquestor",
-      "permissions": ["android.permission.NFC"]
+      "permissions": ["android.permission.NFC", "android.permission.ACCESS_FINE_LOCATION"],
+      "config": {
+        "googleMaps": {
+          "apiKey": "YOUR_GOOGLE_MAPS_API_KEY"
+        }
+      }
     },
     "web": {
       "bundler": "metro",
