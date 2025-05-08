@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { router } from 'expo-router'; // Use Expo Router for navigation
 import { db } from '../firebaseConfig';
 import { collection, getDocs } from 'firebase/firestore';
@@ -25,29 +25,20 @@ const MapSelector = () => {
     fetchMaps();
   }, []);
 
-  const renderMapItem = ({ item }) => (
-    <TouchableOpacity
-      style={styles.mapItem}
-      onPress={() => router.push({ pathname: '/mapEditor', params: { mapId: item.id } })}
-    >
-      <Text style={styles.mapTitle}>{item.name || 'Unnamed Map'}</Text>
-    </TouchableOpacity>
-  );
-
   return (
     <View style={styles.container}>
+      <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        <Text style={styles.backButtonText}>←</Text>
+      </TouchableOpacity>
       <Text style={styles.header}>Map Selection</Text>
-      <FlatList
-        data={maps}
-        renderItem={renderMapItem}
-        keyExtractor={item => item.id}
-        ListEmptyComponent={<Text>No maps found.</Text>}
-      />
+      {maps.length === 0 ? (
+        <Text style={styles.noMapsText}>No maps found.</Text>
+      ) : null}
       <TouchableOpacity
-        style={styles.button}
+        style={styles.createButton}
         onPress={() => router.push('/mapConfig')}
       >
-        <Text style={styles.buttonText}>Create New Map</Text>
+        <Text style={styles.createButtonText}>Create New Map</Text>
       </TouchableOpacity>
     </View>
   );
@@ -56,30 +47,44 @@ const MapSelector = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
     backgroundColor: '#fff',
+    padding: 20,
+    justifyContent: 'space-between',
+  },
+  backButton: {
+    position: 'absolute',
+    top: 40,
+    left: 20,
+    zIndex: 1,
+  },
+  backButtonText: {
+    fontSize: 24,
+    color: '#000',
   },
   header: {
     fontSize: 24,
     fontWeight: 'bold',
+    marginTop: 60,
     marginBottom: 20,
+    textAlign: 'center',
   },
-  mapItem: {
-    padding: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
+  noMapsText: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginTop: 20,
+    color: '#666',
   },
-  mapTitle: {
-    fontSize: 18,
-  },
-  button: {
+  createButton: {
     backgroundColor: '#007AFF',
     padding: 15,
     borderRadius: 5,
     alignItems: 'center',
-    marginTop: 20,
+    position: 'absolute',
+    bottom: 20,
+    left: 20,
+    right: 20,
   },
-  buttonText: {
+  createButtonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
