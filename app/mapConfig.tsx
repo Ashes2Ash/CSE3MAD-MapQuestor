@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, Alert } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
-import { db } from '../firebaseConfig';
-import { collection, addDoc } from 'firebase/firestore';
+import { db, saveMapWithImage } from '../firebaseConfig';
 
 const MapConfig = () => {
   const router = useRouter();
@@ -28,35 +27,34 @@ const MapConfig = () => {
     }
   };
 
-  const saveMap = async () {
+  const uriToBlob = (uri) => {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.onload = () => {
+        resolve(xhr.response);
+      };
+      xhr.onerror = () => {
+        reject(new TypeError('Network request failed'));
+      };
+      xhr.responseType = 'blob';
+      xhr.open('GET', uri, true);
+      xhr.send(null);
+    });
+  };
+
+  const saveMap = async () => {
     if (!imageUri || !scale) {
       Alert.alert('Error', 'Please upload an image and select a scale.');
       return;
     }
 
     try {
-      const storageRef = ref(storage, `maps/${Date.now()}_${imageUri.substring(imageUri.lastIndexOf('/') + 1)}`);
-      const blob = await new Promise((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        xhr.onload = () => resolve(xhr.response);
-        xhr.onerror = () => reject(new TypeError('Network request failed'));
-        xhr.responseType = 'blob';
-        xhr.open('GET', imageUri, true);
-        xhr.send(null);
-      });
-      const snapshot = await uploadBytes(storageRef, blob as Blob);
-      const imageUrl = await getDownloadURL(snapshot.ref);
-
-      const mapData = {
-        imageUrl,
-        scale,
-        createdAt: new Date(),
-      };
-
-      await addDoc(collection(db, 'maps'), mapData);
+      const blob = await uriToBlob(imageUri);
+      const fileName = imageUri.substring(imageUri.lastIndexOf('/') + 1);
+      await saveMapWithImage({ scale }, blob, fileName);
       Alert.alert('Success', 'Map saved successfully!');
       router.back();
-    } catch (error: any) {
+    } catch (error) {
       Alert.alert('Error', error.message);
     }
   };
