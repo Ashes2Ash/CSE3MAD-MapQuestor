@@ -57,3 +57,10 @@ Join our community of developers creating universal apps.
 ```bash
 npm install react-native-gesture-handler
 ```
+
+Ensure you have the necessary dependencies installed in your React Native project:
+
+Install expo-image-picker for image uploading:
+```bash
+npx expo install expo-image-picker
+```
