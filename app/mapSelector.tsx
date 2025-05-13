@@ -80,7 +80,7 @@ export default function mapSelector() {
           uri:      data.imageURL,
           title:    data.title,
 
-          onPress: () => console.log("Tapped", docSnap.id) //Just alerts console that tap has been registered, update when ready(NOTHING WHILE STILL IN DEVELOPMENT)
+          onPress: () => console.log("Tapped", docSnap.id) //Just alerts console that tap has been registered, (UPDATE TO REDIRECT TO mapEditor.tsx)
         })
         
       }
