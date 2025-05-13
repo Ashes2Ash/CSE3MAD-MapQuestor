@@ -51,9 +51,6 @@ export default function LoginScreen() {
       <TouchableOpacity style={styles.signInButton} onPress={() => router.push('/signUp')}>
         <Text style={styles.signInText}>Go to Sign Up</Text>
       </TouchableOpacity>
-      <TouchableOpacity style={styles.signInButton} onPress={() => router.push('/mapSelector')}>
-        <Text style={styles.signInText}>Go to mapSelector test</Text>
-      </TouchableOpacity>
     </View>
   );
 }
