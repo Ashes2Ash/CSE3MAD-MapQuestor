@@ -1,16 +1,18 @@
 import { useState } from 'react';
-import { View, TextInput, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, TextInput, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../firebaseConfig';
+import { auth, db } from '../firebaseConfig';
 import { router } from 'expo-router';
+import { ref, getDownloadURL} from 'firebase/storage';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error,setError]=useState('');
-
   return (
     <View style={styles.loginContainer}>
+      <Text style={styles.title}>MapQuestor</Text>
+      <Image source={{uri: 'https://firebasestorage.googleapis.com/v0/b/mapquestor-e1b1f.firebasestorage.app/o/assets%2Flogo.png?alt=media&token=256502c1-2b48-4e7c-bc47-7c349e712db4'}}style={{ width: 200, height: 200 }}/>
       <TextInput
         style={styles.userInputs}
         value={email}
@@ -83,5 +85,8 @@ const styles = StyleSheet.create({
   errorText:{
     color: 'red',
     marginTop: 10,
+  },
+  title:{
+    fontSize:32
   }
 });
