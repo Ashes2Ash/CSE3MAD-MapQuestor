@@ -5,12 +5,14 @@ import { auth, db } from '../firebaseConfig';
 import { router } from 'expo-router';
 
 export default function LoginScreen() {
+  //state variables for email and text inputs, and also for error display in the event of an authentication error
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error,setError]=useState('');
   return (
     <View style={styles.loginContainer}>
       <Text style={styles.title}>MapQuestor</Text>
+      {/*MapQuestor Logo*/}
       <Image source={{uri: 'https://firebasestorage.googleapis.com/v0/b/mapquestor-e1b1f.firebasestorage.app/o/assets%2Flogo.png?alt=media&token=256502c1-2b48-4e7c-bc47-7c349e712db4'}}style={{ width: 200, height: 200 }}/>
       <TextInput
         style={styles.userInputs}

@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import React, {FC} from 'react'; //Imports react and Function Component
 import { View, Text, StyleSheet, TouchableOpacity, Image, Dimensions } from 'react-native'; //Imports building blocks for screen
 import {useState,useEffect} from 'react'; //useState stores states of data. used in this to hold map lists from firebase. useEffect runs side loaded scripts at specific times 
@@ -6,13 +5,6 @@ import {auth,db} from '../firebaseConfig'; //auth allows us to confirm which use
 import { router } from 'expo-router'; //redirects to other page in app
 import {collection, getDocs} from 'firebase/firestore'; //allows us to explore data collections and documents stored in firebase storage, used here to get map links for the tiles.
 import { ScrollView } from 'react-native'
-=======
-import React, { FC, useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Dimensions, TextInput, FlatList } from 'react-native';
-import { auth, db } from '../firebaseConfig';
-import { router } from 'expo-router';
-import { collection, getDocs, onSnapshot } from 'firebase/firestore';
->>>>>>> 13e9d09acc8b95f64cbd5ddb3e2c2810894bb34c
 
 interface MapTileProps {
   uri: string;
@@ -30,20 +22,11 @@ const MapTile: FC<MapTileProps> = ({ uri, onPress, title }) => {
       <Image source={{ uri }} style={{ width: 100, height: 100 }} />
       <Text>{title}</Text>
     </TouchableOpacity>
-<<<<<<< HEAD
   )
 }
 function MapGrid({children}: MapGridProps): JSX.Element{
   const userMaps=Array.isArray(children) ? children:[children]
   return(
-=======
-  );
-};
-
-function MapGrid({ children }: MapGridProps): JSX.Element {
-  const userMaps = Array.isArray(children) ? children : [children];
-  return (
->>>>>>> 13e9d09acc8b95f64cbd5ddb3e2c2810894bb34c
     <View style={styles.grid}>
       {userMaps.map((child, i) => (
         <View style={styles.tile} key={i}>
@@ -121,7 +104,6 @@ export default function mapSelector() {
 
   return (
     <View style={styles.screen}>
-<<<<<<< HEAD
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.title}>
           <Text>Select a map to edit!</Text>
@@ -141,48 +123,6 @@ export default function mapSelector() {
         <TouchableOpacity style={styles.uploadButton} onPress={() => router.push('/uploadMap')}>
           <Text>Upload New Map</Text>
             </TouchableOpacity>
-=======
-      <View style={styles.title}>
-        <Text>Select a map to edit!</Text>
-      </View>
-
-      {/* User Maps Grid */}
-      <MapGrid>
-        {maps.map((item) => (
-          <MapTile key={item.id} uri={item.uri} onPress={item.onPress} title={item.title} />
-        ))}
-      </MapGrid>
-
-      {/* Upload Button */}
-      <View>
-        <TouchableOpacity style={styles.testButton} onPress={() => router.push('/uploadMap')}>
-          <Text style={{ color: 'white' }}>Upload New Map</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Shared Maps Search & List */}
-      <View style={{ marginTop: 20 }}>
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search shared maps..."
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-        />
-        <FlatList
-          data={filteredMaps}
-          keyExtractor={(item) => item.id}
-          renderItem={renderMapItem}
-          ListHeaderComponent={<Text style={styles.header}>Shared Maps</Text>}
-        />
-      </View>
-
-      {/* Bottom Nav */}
-      <View style={styles.bottomNav}>
-        <TouchableOpacity><Text>My Map</Text></TouchableOpacity>
-        <TouchableOpacity><Text>Edit</Text></TouchableOpacity>
-        <TouchableOpacity><Text>POIs</Text></TouchableOpacity>
-        <TouchableOpacity><Text>Home</Text></TouchableOpacity>
->>>>>>> 13e9d09acc8b95f64cbd5ddb3e2c2810894bb34c
       </View>
     </View>
   );
@@ -200,7 +140,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     padding: 10,
   },
-<<<<<<< HEAD
   uploadButton: {
     justifyContent:'center',
     alignContent:'center',
@@ -213,17 +152,6 @@ const styles = StyleSheet.create({
   },
   uploadButtonText:{
     textAlign:'center'
-=======
-  testButton: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#50546B',
-    width: '50%',
-    height: 30,
-    marginTop: 12,
-    alignSelf: 'center',
-    borderRadius: 5,
->>>>>>> 13e9d09acc8b95f64cbd5ddb3e2c2810894bb34c
   },
   grid: {
     flexDirection: 'row',
@@ -263,7 +191,6 @@ const styles = StyleSheet.create({
     borderTopColor: '#ccc',
     marginTop: 10,
   },
-<<<<<<< HEAD
   tile:{
     justifyContent:'center',
     alignItems:'center',
@@ -289,6 +216,4 @@ const styles = StyleSheet.create({
   scrollContent:{
     paddingBottom: 80
   }
-=======
->>>>>>> 13e9d09acc8b95f64cbd5ddb3e2c2810894bb34c
 });
