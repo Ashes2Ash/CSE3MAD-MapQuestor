@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Image, Dimensions } from 'rea
 import {useState,useEffect} from 'react'; //useState stores states of data. used in this to hold map lists from firebase. useEffect runs side loaded scripts at specific times 
 import {auth,db} from '../firebaseConfig'; //auth allows us to confirm which user is logged in, db links to our firestore
 import { router } from 'expo-router'; //redirects to other page in app
-import {collection, getDocs} from 'firebase/firestore'; //allows us to explore data collections and documents stored in firebase storage, used here to get map links for the tiles.
+import {collection, getDocs, onSnapshot} from 'firebase/firestore'; //allows us to explore data collections and documents stored in firebase storage, used here to get map links for the tiles.
 import { ScrollView } from 'react-native'
 
 interface MapTileProps {
