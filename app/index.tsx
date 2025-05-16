@@ -3,7 +3,6 @@ import { View, TextInput, Text, StyleSheet, TouchableOpacity, Image } from 'reac
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth, db } from '../firebaseConfig';
 import { router } from 'expo-router';
-import { ref, getDownloadURL} from 'firebase/storage';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
@@ -74,7 +73,7 @@ const styles = StyleSheet.create({
   signInButton: {
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#50546B',
+    backgroundColor: '#007AFF',
     width: '50%',
     height: 30,
     marginTop: 12
