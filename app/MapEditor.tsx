@@ -1,49 +1,75 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
-import MapView, { Marker } from 'react-native-maps';
+import { View, Text, TouchableOpacity, StyleSheet, Alert, Image, ScrollView } from 'react-native';
 import firestore from '@react-native-firebase/firestore';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import POIDetailsModal from './POIDetailsModal';
+import { auth } from '../firebaseConfig';
 
 const MapEditor = () => {
   const { mapId } = useLocalSearchParams();
+  const [mapData, setMapData] = useState(null);
   const [pois, setPois] = useState([]);
   const [selectedPOI, setSelectedPOI] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
-    const unsubscribe = firestore()
-      .collection('maps')
-      .doc(mapId)
-      .collection('pois')
-      .onSnapshot((snapshot) => {
+    const user = auth.currentUser;
+    if (!user) return;
+    const uid = user.uid;
+
+    // First, try to fetch from user-specific maps
+    const userMapRef = firestore().collection(`users/${uid}/maps`).doc(mapId);
+    userMapRef.get().then((doc) => {
+      if (doc.exists) {
+        setMapData(doc.data());
+        fetchPOIs(userMapRef);
+      } else {
+        // If not found in user maps, try shared maps
+        const sharedMapRef = firestore().collection('maps').doc(mapId);
+        sharedMapRef.get().then((sharedDoc) => {
+          if (sharedDoc.exists) {
+            setMapData(sharedDoc.data());
+            fetchPOIs(sharedMapRef);
+          } else {
+            console.error('Map not found');
+          }
+        });
+      }
+    });
+  }, [mapId]);
+
+  const fetchPOIs = (mapRef) => {
+    const unsubscribe = mapRef.collection('pois').onSnapshot(
+      (snapshot) => {
         const poiList = snapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
         }));
         setPois(poiList);
-      }, (error) => {
+      },
+      (error) => {
         console.error('Error fetching POIs:', error);
-      });
-
-    return () => unsubscribe();
-  }, [mapId]);
+      }
+    );
+    return unsubscribe;
+  };
 
   const handleMapPress = async (event) => {
     const { coordinate } = event.nativeEvent;
     const newPOI = {
-      latitude: coordinate.latitude,
-      longitude: coordinate.longitude,
+      x: coordinate.x, // Adjust based on your image coordinates
+      y: coordinate.y,
       name: '',
       description: '',
       createdAt: firestore.FieldValue.serverTimestamp(),
     };
-    const poiRef = await firestore()
-      .collection('maps')
-      .doc(mapId)
-      .collection('pois')
-      .add(newPOI);
+    const user = auth.currentUser;
+    const uid = user.uid;
+    const mapRef = firestore()
+      .collection(mapData?.isShared ? 'maps' : `users/${uid}/maps`)
+      .doc(mapId);
+    const poiRef = await mapRef.collection('pois').add(newPOI);
     setSelectedPOI({ id: poiRef.id, ...newPOI });
     setModalVisible(true);
   };
@@ -53,7 +79,12 @@ const MapEditor = () => {
   };
 
   const handleDeletePOI = async (poiId) => {
-    await firestore().collection('maps').doc(mapId).collection('pois').doc(poiId).delete();
+    const user = auth.currentUser;
+    const uid = user.uid;
+    const mapRef = firestore()
+      .collection(mapData?.isShared ? 'maps' : `users/${uid}/maps`)
+      .doc(mapId);
+    await mapRef.collection('pois').doc(poiId).delete();
   };
 
   const handleSharePOI = (poi) => {
@@ -62,28 +93,41 @@ const MapEditor = () => {
 
   return (
     <View style={styles.container}>
-      <MapView
-        style={styles.map}
-        initialRegion={{
-          latitude: 37.78825,
-          longitude: -122.4324,
-          latitudeDelta: 0.0922,
-          longitudeDelta: 0.0421,
-        }}
-        onPress={handleMapPress}
-      >
-        {pois.map((poi) => (
-          <Marker
-            key={poi.id}
-            coordinate={{ latitude: poi.latitude, longitude: poi.longitude }}
-            title={poi.name}
-            onPress={() => {
-              setSelectedPOI(poi);
-              setModalVisible(true);
-            }}
+      <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <Text>←</Text>
+      </TouchableOpacity>
+      {mapData?.imageURL ? (
+        <ScrollView
+          style={styles.mapContainer}
+          contentContainerStyle={{ position: 'relative' }}
+          onTouchEnd={(e) => {
+            const { locationX, locationY } = e.nativeEvent;
+            handleMapPress({
+              nativeEvent: { coordinate: { x: locationX, y: locationY } },
+            });
+          }}
+        >
+          <Image
+            source={{ uri: mapData.imageURL }}
+            style={styles.mapImage}
+            resizeMode="contain"
           />
-        ))}
-      </MapView>
+          {pois.map((poi) => (
+            <TouchableOpacity
+              key={poi.id}
+              style={[styles.poiMarker, { left: poi.x, top: poi.y }]}
+              onPress={() => {
+                setSelectedPOI(poi);
+                setModalVisible(true);
+              }}
+            >
+              <Text>{poi.name || 'POI'}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      ) : (
+        <Text>Loading map...</Text>
+      )}
       <TouchableOpacity style={styles.saveButton} onPress={handleSaveMap}>
         <Text>Save Map</Text>
       </TouchableOpacity>
@@ -97,7 +141,14 @@ const MapEditor = () => {
         visible={modalVisible}
         poi={selectedPOI}
         onSave={(data) => {
-          firestore().collection('maps').doc(mapId).collection('pois').doc(selectedPOI.id).update(data);
+          const user = auth.currentUser;
+          const uid = user.uid;
+          firestore()
+            .collection(mapData?.isShared ? 'maps' : `users/${uid}/maps`)
+            .doc(mapId)
+            .collection('pois')
+            .doc(selectedPOI.id)
+            .update(data);
           setModalVisible(false);
         }}
         onClose={() => setModalVisible(false)}
@@ -109,8 +160,11 @@ const MapEditor = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  map: { flex: 1 },
+  container: { flex: 1, backgroundColor: '#fff' },
+  backButton: { position: 'absolute', top: 10, left: 10, padding: 10, zIndex: 1 },
+  mapContainer: { flex: 1 },
+  mapImage: { width: '100%', height: 300 },
+  poiMarker: { position: 'absolute', backgroundColor: 'rgba(255, 0, 0, 0.5)', padding: 5, borderRadius: 5 },
   saveButton: { position: 'absolute', top: 10, right: 10, padding: 10, backgroundColor: '#ddd' },
   bottomNav: { flexDirection: 'row', justifyContent: 'space-around', padding: 10, borderTopWidth: 1, borderTopColor: '#ccc' },
 });
