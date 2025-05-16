@@ -17,7 +17,12 @@ export default function SignUpScreen() {
   const [password, setPassword] = useState("");
 
   return (
+    <View style={styles.screen}>
+      <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        <Text style={styles.backButtonText}>←</Text>
+      </TouchableOpacity>
     <View style={styles.signUpContainer}>
+      <Text style={styles.title}>Sign Up for an Account!</Text>
       {/* Email input field */}
       <TextInput
         style={styles.userInputs}
@@ -52,7 +57,7 @@ export default function SignUpScreen() {
                   console.log("Verification email sent");
 
                   // Navigate back to the login screen
-                  router.push('/');
+                  router.push('./index');
                 })
                 .catch((error) => {
                   console.log("Failed to send verification:", error.message);
@@ -66,32 +71,48 @@ export default function SignUpScreen() {
         <Text style={styles.signInText}>Sign Up</Text>
       </TouchableOpacity>
     </View>
+  </View>
   );
 }
-
-// StyleSheet for the SignUpScreen layout
 const styles = StyleSheet.create({
+  screen:{
+    flex:1
+  },
+  title:{
+    padding:20,
+    fontSize:20
+  },
   signUpContainer: {
-    flex: 1,                     // Fills the screen vertically
-    justifyContent: 'center',   // Centers content vertically
-    alignItems: 'center',       // Centers content horizontally
-    padding: 20                 // Padding inside the screen
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20
   },
   userInputs: {
-    padding: 10,                // Space inside the input
-    width: '50%',              // Relative width of the input
-    backgroundColor: '#e6e6e6', // Light gray background
-    marginBottom: 12,          // Space between inputs
-    borderRadius: 6            // Rounded input corners
+    padding: 10,
+    width: '50%',
+    backgroundColor: '#e6e6e6',
+    marginBottom: 12,
+    borderRadius: 6
   },
   signUpButton: {
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#50546B', // Button background color
-    width: '50%',               // Button width
-    height: 30                  // Button height
+    backgroundColor: '#007AFF',
+    width: '50%',
+    height: 30
   },
   signInText: {
-    color: 'white'              // Button text color
+    color: 'white'
+  },
+  backButton: {
+    position: 'absolute',
+    top: 40,
+    left: 20,
+    zIndex: 1,
+  },
+  backButtonText: {
+    fontSize: 24,
+    color: '#000',
   }
 });

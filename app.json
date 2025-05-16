@@ -1,20 +1,45 @@
 {
   "expo": {
-    "name": "CSE3MAD-Assignment",
-    "slug": "CSE3MAD-Assignment",
+    "name": "MapQuestor",
+    "slug": "MapQuestor",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/icon.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "updates": {
+      "fallbackToCacheTimeout": 0
+    },
+    "assetBundlePatterns": ["**/*"],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.yourcompany.mapquestor",
+      "infoPlist": {
+        "NFCReaderUsageDescription": "We need to use NFC to share maps.",
+        "com.apple.developer.nfc.readersession.formats": ["NDEF"],
+        "NSLocationWhenInUseUsageDescription": "We need your location to display the map."
+      },
+      "config": {
+        "googleMapsApiKey": "YOUR_GOOGLE_MAPS_API_KEY"
+      }
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#FFFFFF"
+      },
+      "package": "com.yourcompany.mapquestor",
+      "permissions": ["android.permission.NFC", "android.permission.ACCESS_FINE_LOCATION"],
+      "config": {
+        "googleMaps": {
+          "apiKey": "YOUR_GOOGLE_MAPS_API_KEY"
+        }
       }
     },
     "web": {

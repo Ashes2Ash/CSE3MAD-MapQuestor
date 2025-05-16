@@ -1,13 +1,11 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-import {getAuth} from "firebase/auth";
-import { getFirestore } from 'firebase/firestore';
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+//import { getAnalytics } from "firebase/analytics";
+import { getAuth } from "firebase/auth";
+import { getFirestore, collection, addDoc } from 'firebase/firestore';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 // Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
   apiKey: "AIzaSyCtQcAzYQcu8DDT8qmhvljh-PzCq4GVCJU",
   authDomain: "mapquestor-e1b1f.firebaseapp.com",
@@ -20,6 +18,57 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app); 
-const analytics = getAnalytics(app);
+export const db = getFirestore(app);
+//const analytics = getAnalytics(app);
 export const auth = getAuth(app);
+const storage = getStorage(app);
+
+// Function to save POI data with an image
+export async function savePOIWithImage(poiData, imageFile) {
+  try {
+    let imageUrl = null;
+    if (imageFile) {
+      const storageRef = ref(storage, `pois/${Date.now()}_${imageFile.name}`);
+      const snapshot = await uploadBytes(storageRef, imageFile);
+      imageUrl = await getDownloadURL(snapshot.ref);
+    }
+
+    const poiDataWithImage = {
+      ...poiData,
+      imageUrl: imageUrl || null,
+      createdAt: new Date()
+    };
+
+    const docRef = await addDoc(collection(db, 'pois'), poiDataWithImage);
+    console.log("POI saved with ID: ", docRef.id);
+    return docRef.id;
+  } catch (e) {
+    console.error("Error saving POI with image: ", e);
+    throw e;
+  }
+}
+
+// Function to save Map data with an image
+export async function saveMapWithImage(mapData, imageFile) {
+  try {
+    let imageUrl = null;
+    if (imageFile) {
+      const storageRef = ref(storage, `maps/${Date.now()}_${imageFile.name}`);
+      const snapshot = await uploadBytes(storageRef, imageFile);
+      imageUrl = await getDownloadURL(snapshot.ref);
+    }
+
+    const mapDataWithImage = {
+      ...mapData,
+      imageUrl: imageUrl || null,
+      createdAt: new Date()
+    };
+
+    const docRef = await addDoc(collection(db, 'maps'), mapDataWithImage);
+    console.log("Map saved with ID: ", docRef.id);
+    return docRef.id;
+  } catch (e) {
+    console.error("Error saving Map with image: ", e);
+    throw e;
+  }
+}
